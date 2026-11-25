@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>快速記錄｜學生行為事件與輔導紀錄整理</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>學生行為事件與輔導紀錄整理</h1>
+    <nav>
+      <a href="index.html" class="active">快速記錄</a>
+      <a href="records.html">紀錄列表</a>
+      <a href="report.html">產生正式紀錄</a>
+      <a href="stats.html">統計</a>
+    </nav>
+  </header>
+  <main>
+    <div class="card">
+      <h2>快速記錄</h2>
+      <p class="todo">負責人：前端：快速記錄　待完成：</p>
+      <ul class="todo">
+        <li>讀取學生名單，產生座號按鈕（已完成範例）</li>
+        <li>讀取事件類型，產生類型按鈕（已完成範例）</li>
+        <li>自動帶入日期與節次</li>
+        <li>加上備註欄、處理方式、是否通知家長</li>
+        <li>麥克風按鈕：語音轉文字（Web Speech API）</li>
+        <li>上傳照片按鈕：呼叫後台 AI 轉文字並自動填欄位</li>
+        <li>按「送出」呼叫 addRecord() 存檔</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>選擇學生（座號）</h2>
+      <div id="seats"></div>
+    </div>
+    <div class="card">
+      <h2>事件類型</h2>
+      <div id="types"></div>
+    </div>
+  </main>
+  <script src="js/storage.js"></script>
+  <script>
+    // 範例：從 storage.js 讀取資料，自動產生按鈕
+    function pick(btn) {
+      btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+    getStudents().then(list => {
+      document.getElementById('seats').innerHTML =
+        list.map(s => `<button onclick="pick(this)">${s.seat} 號</button>`).join(' ');
+    });
+    getTypes().then(list => {
+      document.getElementById('types').innerHTML =
+        list.map(t => `<button onclick="pick(this)">${t}</button>`).join(' ');
+    });
+  </script>
+</body>
+</html>
