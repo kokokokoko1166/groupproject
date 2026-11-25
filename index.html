@@ -1,59 +1,429 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>快速記錄｜學生行為事件與輔導紀錄整理</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>學生行為事件與輔導紀錄整理</title>
+<style>
+/* ===== 共用樣式 ===== */
+:root{
+  --bg:#F3F5F1; --paper:#fff; --ink:#1D2826; --muted:#5E6B67; --line:#DCE2DC;
+  --board:#24493D; --board-ink:#EEF3EC; --accent:#2F7A5F; --warn:#B9435A; --chip:#E8EEE8; --gold:#D49A2A;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:15px;line-height:1.6}
+header{background:var(--board);color:var(--board-ink)}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+header .wrap{padding-top:22px;padding-bottom:18px;display:grid;gap:6px}
+header h1{margin:0;font-size:clamp(22px,4.5vw,30px)}
+header p{margin:0;opacity:.85;font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:-1px;padding-top:16px}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi .v{font-size:26px;font-weight:700;line-height:1.2}
+.kpi .l{font-size:12.5px;color:var(--muted)}
+.kpi.hot .v{color:var(--warn)}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;padding:12px 0 10px;border-bottom:1px solid var(--line);margin-top:14px}
+nav.tabs button{flex:none;font:inherit;font-weight:500;border:0;border-radius:8px;padding:8px 14px;background:transparent;color:var(--muted);cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--board);color:var(--board-ink)}
+section{padding:18px 0 40px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:17px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.grid-seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+button.pick{font:inherit;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:9px 6px;cursor:pointer;min-height:44px}
+.chips button.pick{padding:8px 14px}
+button.pick[aria-pressed="true"]{background:var(--board);color:#fff;border-color:var(--board)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select,input,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);color:var(--ink)}
+textarea{width:100%;min-height:90px;resize:vertical}
+.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:12px 18px;background:var(--accent);color:#fff;cursor:pointer}
+.btn.ghost{background:var(--chip);color:var(--ink);font-weight:500}
+.btn.mic{background:var(--gold)}
+.btn.mic.on{background:var(--warn)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.submit-bar{position:sticky;bottom:0;background:var(--bg);padding:10px 0;display:flex;gap:10px;align-items:center}
+.submit-bar .btn{flex:1}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:20}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:500}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:4px;background:var(--chip)}
+.tag.yes{background:#F6DDE2;color:var(--warn)}
+.del{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px}
+.table-wrap{overflow-x:auto}
+.bars{display:grid;gap:10px}
+.bar .top{display:flex;justify-content:space-between;font-size:14px}
+.bar .track{height:16px;background:var(--chip);border-radius:4px;overflow:hidden}
+.bar .track span{display:block;height:100%;background:var(--accent)}
+.bar.first .track span{background:var(--warn)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#reportText{min-height:320px;font-size:14.5px;line-height:1.8}
+footer{font-size:12.5px;color:var(--muted);padding:10px 0 40px}
+@media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.stats-grid{grid-template-columns:1fr}}
+@media print{header,nav,.kpis,footer,.no-print{display:none!important}section{padding:0}#reportText{border:0;min-height:0}}
+</style>
 </head>
 <body>
-  <header>
+
+<header>
+  <div class="wrap">
     <h1>學生行為事件與輔導紀錄整理</h1>
-    <nav>
-      <a href="index.html" class="active">快速記錄</a>
-      <a href="records.html">紀錄列表</a>
-      <a href="report.html">產生正式紀錄</a>
-      <a href="stats.html">統計</a>
-    </nav>
-  </header>
-  <main>
+    <p>當下 10 秒記下學生事件，事後一鍵整理成正式輔導紀錄</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ===== 上方摘要數字 ===== -->
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="kToday">0</div><div class="l">今日紀錄</div></div>
+    <div class="kpi"><div class="v" id="kWeek">0</div><div class="l">近 7 天紀錄</div></div>
+    <div class="kpi"><div class="v" id="kType">—</div><div class="l">近 7 天最常見事件</div></div>
+    <div class="kpi hot"><div class="v" id="kSeat">—</div><div class="l">近 7 天需關注學生</div></div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="record" aria-selected="true">快速記錄</button>
+    <button role="tab" data-tab="list" aria-selected="false">紀錄列表</button>
+    <button role="tab" data-tab="report" aria-selected="false">產生正式紀錄</button>
+    <button role="tab" data-tab="stats" aria-selected="false">統計</button>
+  </nav>
+
+  <!-- ===== 分頁 1：快速記錄（負責人：＿＿＿） ===== -->
+  <section data-tab="record">
     <div class="card">
-      <h2>快速記錄</h2>
-      <p class="todo">負責人：前端：快速記錄　待完成：</p>
-      <ul class="todo">
-        <li>讀取學生名單，產生座號按鈕（已完成範例）</li>
-        <li>讀取事件類型，產生類型按鈕（已完成範例）</li>
-        <li>自動帶入日期與節次</li>
-        <li>加上備註欄、處理方式、是否通知家長</li>
-        <li>麥克風按鈕：語音轉文字（Web Speech API）</li>
-        <li>上傳照片按鈕：呼叫後台 AI 轉文字並自動填欄位</li>
-        <li>按「送出」呼叫 addRecord() 存檔</li>
-      </ul>
+      <h2>① 選擇學生</h2>
+      <div class="grid-seats" id="seats"></div>
     </div>
     <div class="card">
-      <h2>選擇學生（座號）</h2>
-      <div id="seats"></div>
+      <h2>② 事件類型</h2>
+      <div class="chips" id="types"></div>
     </div>
     <div class="card">
-      <h2>事件類型</h2>
-      <div id="types"></div>
+      <h2>③ 節次與處理方式</h2>
+      <div class="row" style="margin-bottom:10px">
+        <select id="period" aria-label="節次"></select>
+        <label class="row" style="gap:6px"><input type="checkbox" id="notify"> 已通知家長</label>
+      </div>
+      <div class="chips" id="actions"></div>
     </div>
-  </main>
-  <script src="js/storage.js"></script>
-  <script>
-    // 範例：從 storage.js 讀取資料，自動產生按鈕
-    function pick(btn) {
-      btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-    }
-    getStudents().then(list => {
-      document.getElementById('seats').innerHTML =
-        list.map(s => `<button onclick="pick(this)">${s.seat} 號</button>`).join(' ');
-    });
-    getTypes().then(list => {
-      document.getElementById('types').innerHTML =
-        list.map(t => `<button onclick="pick(this)">${t}</button>`).join(' ');
-    });
-  </script>
+    <div class="card">
+      <h2>④ 事件描述（可用說的）</h2>
+      <textarea id="note" placeholder="例如：上課一直和隔壁同學講話，提醒兩次仍持續"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn mic" id="micBtn" type="button">🎤 按我開始說話</button>
+        <p class="hint" id="micHint">語音會轉成文字放進上面的框，送出前可以修改。</p>
+      </div>
+    </div>
+    <div class="submit-bar">
+      <button class="btn" id="saveBtn" type="button" disabled>請先選學生和事件類型</button>
+    </div>
+  </section>
+
+  <!-- ===== 分頁 2：紀錄列表（負責人：＿＿＿） ===== -->
+  <section data-tab="list" hidden>
+    <div class="card">
+      <div class="row" style="margin-bottom:12px">
+        <select id="fSeat" aria-label="篩選座號"><option value="">全部學生</option></select>
+        <select id="fType" aria-label="篩選事件"><option value="">全部事件</option></select>
+        <span class="hint" id="listCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>時間</th><th>座號</th><th>節次</th><th>事件</th><th>描述</th><th>處理</th><th></th></tr></thead>
+          <tbody id="listBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 分頁 3：產生正式紀錄（負責人：＿＿＿） ===== -->
+  <section data-tab="report" hidden>
+    <div class="card no-print">
+      <div class="row">
+        <select id="rSeat" aria-label="學生"></select>
+        <label class="row" style="gap:6px">從 <input type="date" id="rFrom"></label>
+        <label class="row" style="gap:6px">到 <input type="date" id="rTo"></label>
+        <button class="btn" id="genBtn" type="button">產生紀錄</button>
+      </div>
+      <p class="hint" style="margin-top:8px">產生後可直接修改文字，確認無誤再複製或列印。</p>
+    </div>
+    <div class="card">
+      <textarea id="reportText" placeholder="選擇學生與日期範圍後，按「產生紀錄」"></textarea>
+      <div class="row no-print" style="margin-top:10px">
+        <button class="btn ghost" id="copyBtn" type="button">複製文字</button>
+        <button class="btn ghost" id="printBtn" type="button">列印</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 分頁 4：統計（負責人：＿＿＿） ===== -->
+  <section data-tab="stats" hidden>
+    <p class="hint" style="margin-bottom:12px">統計範圍：全部紀錄</p>
+    <div class="stats-grid">
+      <div class="card"><h2>事件類型</h2><div class="bars" id="sType"></div></div>
+      <div class="card"><h2>哪一節最常發生</h2><div class="bars" id="sPeriod"></div></div>
+      <div class="card"><h2>紀錄最多的學生（前 5 名）</h2><div class="bars" id="sSeat"></div></div>
+      <div class="card"><h2>處理方式</h2><div class="bars" id="sAction"></div></div>
+    </div>
+  </section>
+
+  <footer>
+    展示版：目前使用假資料，紀錄只存在這台裝置的瀏覽器裡，不會上傳。畫面只顯示座號，不顯示學生姓名。
+    <button class="del" id="resetBtn" type="button">重設為示範資料</button>
+  </footer>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ===== 設定（之後改由 Google 試算表讀取） ===== */
+const CLASS_NAME = '501';
+const SEAT_COUNT = 25;
+const TYPES = ['上課講話', '離開座位', '同學衝突', '未交作業', '不禮貌', '其他'];
+const ACTIONS = ['口頭提醒', '個別談話', '調整座位', '聯絡家長', '轉介輔導室', '其他'];
+const PERIODS = [
+  ['早自習', '07:40', '08:30'], ['第一節', '08:40', '09:20'], ['第二節', '09:30', '10:10'],
+  ['第三節', '10:30', '11:10'], ['第四節', '11:20', '12:00'], ['午休', '12:00', '13:25'],
+  ['第五節', '13:30', '14:10'], ['第六節', '14:20', '15:00'], ['第七節', '15:10', '15:50'],
+  ['下課時間', '', '']
+];
+const STORE_KEY = 'behavior-records-v1';
+
+/* ===== 資料存取（之後改成呼叫 Apps Script，其他程式不用動） ===== */
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function fmtTime(d) { return fmtDate(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+function demoRecords() {
+  // 以今天為基準，產生近兩週的假資料
+  const seed = [
+    [0, '09:35', 3, '第二節', '上課講話', '和隔壁同學聊天，提醒兩次仍持續', '口頭提醒', false],
+    [0, '13:40', 12, '第五節', '同學衝突', '打掃時與 7 號爭執推擠', '個別談話', true],
+    [1, '08:50', 3, '第一節', '未交作業', '數學習作未交', '口頭提醒', false],
+    [1, '10:35', 18, '第三節', '離開座位', '上課中多次離座走動', '調整座位', false],
+    [1, '13:35', 3, '第五節', '上課講話', '午休後精神亢奮，持續講話', '個別談話', false],
+    [2, '09:40', 7, '第二節', '不禮貌', '被提醒時頂嘴', '個別談話', false],
+    [2, '14:25', 12, '第六節', '上課講話', '', '口頭提醒', false],
+    [3, '08:45', 21, '第一節', '未交作業', '國語作業連續第三天未交', '聯絡家長', true],
+    [3, '11:25', 3, '第四節', '離開座位', '', '口頭提醒', false],
+    [4, '13:45', 18, '第五節', '同學衝突', '下課搶球發生口角', '個別談話', false],
+    [6, '09:30', 12, '第二節', '上課講話', '', '口頭提醒', false],
+    [7, '13:30', 3, '第五節', '不禮貌', '對科任老師沒禮貌回話', '聯絡家長', true],
+    [8, '10:40', 9, '第三節', '其他', '身體不舒服趴睡，已請保健室協助', '其他', false],
+    [9, '08:40', 21, '第一節', '未交作業', '', '口頭提醒', false],
+    [10, '14:30', 12, '第六節', '同學衝突', '分組活動時與同學爭吵', '轉介輔導室', true],
+    [12, '13:40', 7, '第五節', '上課講話', '', '口頭提醒', false]
+  ];
+  return seed.map(function (s, i) {
+    const d = new Date(); d.setDate(d.getDate() - s[0]);
+    const hm = s[1].split(':'); d.setHours(+hm[0], +hm[1], 0, 0);
+    return { id: 'demo' + i, time: fmtTime(d), class: CLASS_NAME, seat: s[2], period: s[3], type: s[4], note: s[5], action: s[6], notifyParent: s[7] };
+  });
+}
+let memoryRecords = null; // 瀏覽器不允許儲存時的備用
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  if (memoryRecords) return memoryRecords;
+  const demo = demoRecords(); saveRecords(demo); return demo;
+}
+function saveRecords(list) {
+  memoryRecords = list;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function addRecord(r) { const list = loadRecords(); list.push(r); saveRecords(list); }
+function deleteRecord(id) { saveRecords(loadRecords().filter(function (r) { return r.id !== id; })); }
+
+/* ===== 小工具 ===== */
+const $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2200); }
+function countBy(list, key) { const m = {}; list.forEach(function (r) { m[r[key]] = (m[r[key]] || 0) + 1; }); return Object.entries(m).sort(function (a, b) { return b[1] - a[1]; }); }
+function sortedRecords() { return loadRecords().slice().sort(function (a, b) { return b.time.localeCompare(a.time); }); }
+function currentPeriod() {
+  const now = new Date(); const hm = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  const p = PERIODS.find(function (p) { return p[1] && hm >= p[1] && hm <= p[2]; });
+  return p ? p[0] : '下課時間';
+}
+
+/* ===== 分頁切換 ===== */
+const tabBtns = document.querySelectorAll('nav.tabs button');
+tabBtns.forEach(function (b) {
+  b.addEventListener('click', function () {
+    tabBtns.forEach(function (x) { x.setAttribute('aria-selected', x === b); });
+    document.querySelectorAll('section[data-tab]').forEach(function (s) { s.hidden = s.dataset.tab !== b.dataset.tab; });
+    renderAll();
+  });
+});
+
+/* ===== 分頁 1：快速記錄 ===== */
+const form = { seat: null, type: null, action: '口頭提醒' };
+function pickGroup(containerId, values, key, labelFn) {
+  $(containerId).innerHTML = values.map(function (v) {
+    return '<button type="button" class="pick" data-v="' + esc(v) + '" aria-pressed="' + (form[key] == v) + '">' + esc(labelFn ? labelFn(v) : v) + '</button>';
+  }).join('');
+  $(containerId).onclick = function (e) {
+    const b = e.target.closest('button.pick'); if (!b) return;
+    form[key] = key === 'seat' ? +b.dataset.v : b.dataset.v;
+    this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+    updateSaveBtn();
+  };
+}
+function setupRecordForm() {
+  const seats = []; for (let i = 1; i <= SEAT_COUNT; i++) seats.push(i);
+  pickGroup('seats', seats, 'seat', function (v) { return v + ' 號'; });
+  pickGroup('types', TYPES, 'type');
+  pickGroup('actions', ACTIONS, 'action');
+  $('period').innerHTML = PERIODS.map(function (p) { return '<option>' + p[0] + '</option>'; }).join('');
+  $('period').value = currentPeriod();
+}
+function updateSaveBtn() {
+  const ok = form.seat && form.type;
+  $('saveBtn').disabled = !ok;
+  $('saveBtn').textContent = ok ? '送出：' + form.seat + ' 號・' + form.type : '請先選學生和事件類型';
+}
+$('saveBtn').addEventListener('click', function () {
+  addRecord({
+    id: 'r' + Date.now(), time: fmtTime(new Date()), class: CLASS_NAME, seat: form.seat,
+    period: $('period').value, type: form.type, note: $('note').value.trim(),
+    action: form.action, notifyParent: $('notify').checked
+  });
+  toast('已記錄：' + form.seat + ' 號・' + form.type);
+  form.seat = null; form.type = null; form.action = '口頭提醒';
+  $('note').value = ''; $('notify').checked = false;
+  setupRecordForm(); updateSaveBtn(); renderKpis();
+});
+
+/* ===== 語音輸入（Web Speech API） ===== */
+(function setupMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = $('micBtn');
+  if (!SR) {
+    btn.disabled = true;
+    $('micHint').textContent = '這個瀏覽器不支援語音輸入，可改用手機鍵盤上的麥克風。';
+    return;
+  }
+  const rec = new SR(); rec.lang = 'zh-TW'; rec.interimResults = true; rec.continuous = false;
+  let base = '', on = false;
+  rec.onresult = function (e) {
+    let text = ''; for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+    $('note').value = base + text;
+  };
+  rec.onend = function () { on = false; btn.classList.remove('on'); btn.textContent = '🎤 按我開始說話'; };
+  rec.onerror = function (e) { $('micHint').textContent = '語音辨識失敗（' + e.error + '），請確認已允許使用麥克風。'; };
+  btn.addEventListener('click', function () {
+    if (on) { rec.stop(); return; }
+    base = $('note').value ? $('note').value + '，' : '';
+    try { rec.start(); on = true; btn.classList.add('on'); btn.textContent = '⏹ 說完了，按我停止'; } catch (e) {}
+  });
+})();
+
+/* ===== 分頁 2：紀錄列表 ===== */
+function renderList() {
+  const fs = $('fSeat').value, ft = $('fType').value;
+  const list = sortedRecords().filter(function (r) { return (!fs || r.seat == fs) && (!ft || r.type === ft); });
+  $('listCount').textContent = '共 ' + list.length + ' 筆';
+  $('listBody').innerHTML = list.map(function (r) {
+    return '<tr><td>' + esc(r.time.slice(5)) + '</td><td>' + r.seat + ' 號</td><td>' + esc(r.period) + '</td>' +
+      '<td><span class="tag">' + esc(r.type) + '</span></td><td>' + esc(r.note || '—') + '</td>' +
+      '<td>' + esc(r.action) + (r.notifyParent ? ' <span class="tag yes">已通知家長</span>' : '') + '</td>' +
+      '<td><button class="del" data-id="' + esc(r.id) + '">刪除</button></td></tr>';
+  }).join('') || '<tr><td colspan="7" class="hint">沒有符合的紀錄</td></tr>';
+}
+function setupFilters() {
+  let opts = '<option value="">全部學生</option>';
+  for (let i = 1; i <= SEAT_COUNT; i++) opts += '<option value="' + i + '">' + i + ' 號</option>';
+  $('fSeat').innerHTML = opts;
+  $('fType').innerHTML = '<option value="">全部事件</option>' + TYPES.map(function (t) { return '<option>' + t + '</option>'; }).join('');
+  $('fSeat').onchange = $('fType').onchange = renderList;
+  $('listBody').onclick = function (e) {
+    const b = e.target.closest('button.del'); if (!b) return;
+    deleteRecord(b.dataset.id); renderList(); renderKpis(); toast('已刪除一筆紀錄');
+  };
+}
+
+/* ===== 分頁 3：產生正式紀錄 ===== */
+function setupReport() {
+  let opts = ''; for (let i = 1; i <= SEAT_COUNT; i++) opts += '<option value="' + i + '">' + i + ' 號</option>';
+  $('rSeat').innerHTML = opts;
+  const today = new Date(), from = new Date(); from.setDate(today.getDate() - 13);
+  $('rFrom').value = fmtDate(from); $('rTo').value = fmtDate(today);
+  const top = countBy(loadRecords(), 'seat')[0]; if (top) $('rSeat').value = top[0];
+}
+$('genBtn').addEventListener('click', function () {
+  const seat = +$('rSeat').value, from = $('rFrom').value, to = $('rTo').value;
+  const list = loadRecords().filter(function (r) { const d = r.time.slice(0, 10); return r.seat === seat && d >= from && d <= to; })
+    .sort(function (a, b) { return a.time.localeCompare(b.time); });
+  if (!list.length) { $('reportText').value = ''; toast('這段期間沒有 ' + seat + ' 號的紀錄'); return; }
+  const types = countBy(list, 'type').map(function (t) { return t[0] + ' ' + t[1] + ' 次'; }).join('、');
+  const notified = list.filter(function (r) { return r.notifyParent; }).length;
+  const lines = [];
+  lines.push('學生輔導紀錄');
+  lines.push('');
+  lines.push('一、基本資料');
+  lines.push('班級：' + CLASS_NAME + '　座號：' + seat + ' 號　姓名：＿＿＿＿＿＿');
+  lines.push('紀錄期間：' + from + ' 至 ' + to);
+  lines.push('');
+  lines.push('二、事件摘要');
+  lines.push('期間共記錄 ' + list.length + ' 次事件，類型分布為：' + types + '。其中 ' + notified + ' 次已通知家長。');
+  lines.push('');
+  lines.push('三、事件經過');
+  list.forEach(function (r, i) {
+    lines.push((i + 1) + '. ' + r.time.slice(0, 10) + '（' + r.period + '）' + r.type + (r.note ? '：' + r.note : '') + '。處理方式：' + r.action + (r.notifyParent ? '，已通知家長' : '') + '。');
+  });
+  lines.push('');
+  lines.push('四、教師觀察與後續追蹤');
+  lines.push('（請老師補充：學生近況、可能原因、後續輔導計畫）');
+  lines.push('');
+  lines.push('紀錄教師：＿＿＿＿＿＿　日期：' + fmtDate(new Date()));
+  $('reportText').value = lines.join('\n');
+  toast('已產生，可直接修改內容');
+});
+$('copyBtn').addEventListener('click', function () {
+  const t = $('reportText');
+  if (!t.value) return;
+  (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject())
+    .then(function () { toast('已複製'); })
+    .catch(function () { t.select(); document.execCommand('copy'); toast('已複製'); });
+});
+$('printBtn').addEventListener('click', function () { window.print(); });
+
+/* ===== 分頁 4：統計 ===== */
+function bars(id, pairs, labelFn) {
+  const max = pairs.length ? pairs[0][1] : 1;
+  $(id).innerHTML = pairs.map(function (p, i) {
+    return '<div class="bar' + (i === 0 ? ' first' : '') + '"><div class="top"><span>' + esc(labelFn ? labelFn(p[0]) : p[0]) + '</span><b>' + p[1] + '</b></div>' +
+      '<div class="track"><span style="width:' + (p[1] / max * 100) + '%"></span></div></div>';
+  }).join('') || '<p class="hint">還沒有紀錄</p>';
+}
+function renderStats() {
+  const list = loadRecords();
+  bars('sType', countBy(list, 'type'));
+  bars('sPeriod', countBy(list, 'period'));
+  bars('sSeat', countBy(list, 'seat').slice(0, 5), function (s) { return s + ' 號'; });
+  bars('sAction', countBy(list, 'action'));
+}
+
+/* ===== 上方摘要數字 ===== */
+function renderKpis() {
+  const list = loadRecords(), today = fmtDate(new Date());
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 6);
+  const week = list.filter(function (r) { return r.time.slice(0, 10) >= fmtDate(weekAgo); });
+  $('kToday').textContent = list.filter(function (r) { return r.time.slice(0, 10) === today; }).length;
+  $('kWeek').textContent = week.length;
+  const t = countBy(week, 'type')[0], s = countBy(week, 'seat')[0];
+  $('kType').textContent = t ? t[0] : '—';
+  $('kSeat').textContent = s ? s[0] + ' 號' : '—';
+}
+
+function renderAll() { renderKpis(); renderList(); renderStats(); }
+$('resetBtn').addEventListener('click', function () { saveRecords(demoRecords()); setupReport(); renderAll(); toast('已重設為示範資料'); });
+
+setupRecordForm(); setupFilters(); setupReport(); renderAll();
+</script>
 </body>
 </html>
